@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoramento de Hábitos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            transform: scale(1.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .resultado {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .resultado p {
+            margin: 8px 0;
+            padding: 8px;
+            background-color: white;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Gerenciador de Hábitos</h1>
+
+    <label for="id">ID:</label>
+    <input type="number" id="id" placeholder="ID (para buscar/atualizar/excluir)">
+
+    <label for="nome">Nome do Hábito:</label>
+    <input type="text" id="nome" placeholder="Nome do hábito">
+
+    <label for="metaSemanal">Meta Semanal:</label>
+    <input type="number" id="metaSemanal" placeholder="Meta semanal em dias">
+
+    <label for="acompanhamentoFreq">Frequência Atual:</label>
+    <input type="number" id="acompanhamentoFreq" placeholder="Dias concluídos">
+
+    <div class="checkbox-container">
+        <label for="feito">Concluído hoje:</label>
+        <input type="checkbox" id="feito">
+    </div>
+
+    <button onclick="buscarHabito()">Buscar Hábito</button>
+    <button onclick="criarHabito()">Criar Novo Hábito</button>
+    <button onclick="atualizarHabito()">Atualizar Hábito</button>
+    <button onclick="deletarHabito()">Excluir Hábito</button>
+
+    <div class="resultado">
+        <h2>Resultado:</h2>
+        <p><strong>ID:</strong> <span id="resId"></span></p>
+        <p><strong>Nome:</strong> <span id="resNome"></span></p>
+        <p><strong>Concluído:</strong> <span id="resFeito"></span></p>
+        <p><strong>Meta Semanal:</strong> <span id="resMeta"></span></p>
+        <p><strong>Frequência:</strong> <span id="resFreq"></span></p>
+    </div>
+</div>
+
+<script>
+    const baseURL = 'http://localhost:3000/habitos/';
+
+    function buscarHabito() {
+        const id = document.getElementById('id').value;
+        fetch(baseURL + id)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('resId').textContent = data.id;
+                document.getElementById('resNome').textContent = data.nome;
+                document.getElementById('resFeito').textContent = data.feito ? '✅ Sim' : '❌ Não';
+                document.getElementById('resMeta').textContent = data.metaSemanal;
+                document.getElementById('resFreq').textContent = data.acompanhamentoFreq;
+            })
+            .catch(() => alert('Hábito não encontrado!'));
+    }
+
+    function criarHabito() {
+        const novoHabito = {
+            nome: document.getElementById('nome').value,
+            metaSemanal: parseInt(document.getElementById('metaSemanal').value) || 0,
+            acompanhamentoFreq: parseInt(document.getElementById('acompanhamentoFreq').value) || 0
+        };
+
+        fetch(baseURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(novoHabito)
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(`Hábito criado com ID: ${data.id}`);
+                document.getElementById('nome').value = '';
+                document.getElementById('metaSemanal').value = '';
+                document.getElementById('acompanhamentoFreq').value = '';
+            })
+            .catch(error => alert('Erro ao criar hábito: ' + error));
+    }
+
+    function atualizarHabito() {
+        const id = document.getElementById('id').value;
+        const atualizacao = {
+            nome: document.getElementById('nome').value,
+            feito: document.getElementById('feito').checked,
+            metaSemanal: parseInt(document.getElementById('metaSemanal').value),
+            acompanhamentoFreq: parseInt(document.getElementById('acompanhamentoFreq').value)
+        };
+
+        fetch(baseURL + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(atualizacao)
+        })
+            .then(response => response.json())
+            .then(data => alert(`Hábito "${data.nome}" atualizado!`))
+            .catch(error => alert('Erro ao atualizar: ' + error));
+    }
+
+    function deletarHabito() {
+        const id = document.getElementById('id').value;
+        fetch(baseURL + id, { method: 'DELETE' })
+            .then(response => {
+                if (response.ok) {
+                    alert('Hábito excluído com sucesso!');
+                    document.getElementById('id').value = '';
+                }
+            })
+            .catch(error => alert('Erro ao excluir: ' + error));
+    }
+</script>
+</body>
+</html>
